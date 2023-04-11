@@ -427,9 +427,9 @@ class UploadEndpointsMixin(object):
             ),
         }
         endpoint = 'rupload_igphoto/'
-        fields = [
+        data_fields = [
             ('upload_id', upload_id),
-            ('_uuid', self.uuid),
+            ('_uuid', self.generate_uuid(False)),
             ('_csrftoken', self.csrftoken)
         ]
         if is_sidecar:
@@ -453,17 +453,13 @@ class UploadEndpointsMixin(object):
                 "Accept-Encoding": "gzip",
             }
         )
-        files = [
-            ('photo', 'pending_media_{0!s}{1!s}'.format(str(int(time.time() * 1000)), '.jpg'),
-             'application/octet-stream', photo_data)
-        ]
 
-        content_type, body = MultipartFormDataEncoder().encode(fields, files)
+        # content_type, body = MultipartFormDataEncoder().encode(data_fields, files)
 
         endpoint_url = "https://{domain}/rupload_igphoto/{name}".format(
             domain="i.instagram.com", name=upload_name
         ),
-        req = compat_urllib_request.Request(endpoint_url, body, headers=headers)
+        req = compat_urllib_request.Request(endpoint_url, photo_data, headers=headers)
         try:
             self.logger.debug('POST {0!s}'.format(endpoint_url))
             response = self.opener.open(req, timeout=self.timeout)
@@ -492,6 +488,8 @@ class UploadEndpointsMixin(object):
         # if for_video:
         #     logger.debug('Skip photo configure.')
         #     return json_response
+        # TODO: figure if we need to configure_timeout
+        # TODO: figure if we need rename option and ine 215 and 216
         if to_reel:
             return self.configure_to_reel(upload_id, size)
         else:
