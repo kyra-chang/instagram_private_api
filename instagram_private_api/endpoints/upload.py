@@ -416,30 +416,53 @@ class UploadEndpointsMixin(object):
         is_sidecar = kwargs.pop('is_sidecar', False)
         if not upload_id:
             upload_id = str(int(time.time() * 1000))
-
-        endpoint = 'upload/photo/'
+        upload_name = "fb_uploader_{upload_id}".format(upload_id=upload_id)
+        rupload_params = {
+            "retry_context": '{"num_step_auto_retry":0,"num_reupload":0,"num_step_manual_retry":0}',
+            "media_type": "1",
+            "xsharing_user_ids": "[]",
+            "upload_id": upload_id,
+            "image_compression": json.dumps(
+                {"lib_name": "moz", "lib_version": "3.1.m", "quality": "80"}
+            ),
+        }
+        endpoint = 'rupload_igphoto/'
         fields = [
             ('upload_id', upload_id),
             ('_uuid', self.uuid),
-            ('_csrftoken', self.csrftoken),
-            ('image_compression', '{"lib_name":"jt","lib_version":"1.3.0","quality":"87"}')
+            ('_csrftoken', self.csrftoken)
         ]
         if is_sidecar:
-            fields.append(('is_sidecar', '1'))
+            rupload_params.append(('is_sidecar', '1'))
             if for_video:
-                fields.append(('media_type', MediaTypes.VIDEO))
-
+                rupload_params.append(('media_type', MediaTypes.VIDEO))
+        waterfall_id = self.uuid # TODO: check this
+        photo_len = str(len(photo_data))
+        headers = self.default_headers
+        headers.update(
+            {
+                "Accept-Encoding": "gzip",
+                "X-Instagram-Rupload-Params": json.dumps(rupload_params),
+                "X_FB_PHOTO_WATERFALL_ID": waterfall_id,
+                "X-Entity-Type": "image/jpeg",
+                "Offset": "0",
+                "X-Entity-Name": upload_name,
+                "X-Entity-Length": photo_len,
+                "Content-Type": "application/octet-stream",
+                "Content-Length": photo_len,
+                "Accept-Encoding": "gzip",
+            }
+        )
         files = [
             ('photo', 'pending_media_{0!s}{1!s}'.format(str(int(time.time() * 1000)), '.jpg'),
              'application/octet-stream', photo_data)
         ]
 
         content_type, body = MultipartFormDataEncoder().encode(fields, files)
-        headers = self.default_headers
-        headers['Content-Type'] = content_type
-        headers['Content-Length'] = len(body)
 
-        endpoint_url = '{0}{1}'.format(self.api_url.format(version='v1'), endpoint)
+        endpoint_url = "https://{domain}/rupload_igphoto/{name}".format(
+            domain="i.instagram.com", name=upload_name
+        ),
         req = compat_urllib_request.Request(endpoint_url, body, headers=headers)
         try:
             self.logger.debug('POST {0!s}'.format(endpoint_url))
