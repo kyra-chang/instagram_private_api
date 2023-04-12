@@ -474,7 +474,7 @@ class UploadEndpointsMixin(object):
             error_response = self._read_response(e)
             print('RESPONSE: {0:d} {1!s}'.format(e.code, error_response))
             raise ClientConnectionError('{} {}'.format(
-                connection_error.__class__.__name__, str(e)))
+                e.__class__.__name__, str(e)))
 
         post_response = self._read_response(response)
         self.logger.debug('RESPONSE: {0:d} {1!s}'.format(response.code, post_response))
