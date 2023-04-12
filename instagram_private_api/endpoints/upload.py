@@ -458,7 +458,8 @@ class UploadEndpointsMixin(object):
 
         endpoint_url = "https://{domain}/rupload_igphoto/{name}".format(
             domain="i.instagram.com", name=upload_name
-        ),
+        )
+        print(endpoint_url)
         req = compat_urllib_request.Request(endpoint_url, photo_data, headers=headers)
         try:
             self.logger.debug('POST {0!s}'.format(endpoint_url))
@@ -469,9 +470,11 @@ class UploadEndpointsMixin(object):
             ErrorHandler.process(e, error_response)
         except (SSLError, timeout, SocketError,
                 compat_urllib_error.URLError,   # URLError is base of HTTPError
-                compat_http_client.HTTPException) as connection_error:
+                compat_http_client.HTTPException) as e:
+            error_response = self._read_response(e)
+            print('RESPONSE: {0:d} {1!s}'.format(e.code, error_response))
             raise ClientConnectionError('{} {}'.format(
-                connection_error.__class__.__name__, str(connection_error)))
+                connection_error.__class__.__name__, str(e)))
 
         post_response = self._read_response(response)
         self.logger.debug('RESPONSE: {0:d} {1!s}'.format(response.code, post_response))
