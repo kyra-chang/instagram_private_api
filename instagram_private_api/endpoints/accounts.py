@@ -56,9 +56,12 @@ class AccountsEndpointsMixin(object):
 
         login_json = json.loads(self._read_response(login_response))
 
+        if login_json.get('two_factor_required', {}):
+            print('two factor required, getting identifier and verification code to login instead')
+            login_json = two_factor_login()
+            
         if not login_json.get('logged_in_user', {}).get('pk'):
             raise ClientLoginError('Unable to login.')
-
         if self.on_login:
             on_login_callback = self.on_login
             on_login_callback(self)
@@ -72,6 +75,53 @@ class AccountsEndpointsMixin(object):
         # self.direct_v2_inbox()
         # self.news_inbox()
         # self.explore()
+
+    def two_factor_login(self, two_factor_id, verify_code):
+        """Two factor login."""
+
+        prelogin_params = self._call_api(
+            'si/fetch_headers/',
+            params='',
+            query={'challenge_type': 'signup', 'guid': self.generate_uuid(True)},
+            return_response=True)
+
+        if not self.csrftoken:
+            raise ClientError(
+                'Unable to get csrf from prelogin.',
+                error_response=self._read_response(prelogin_params))
+        
+        login_params = {
+            'trust_this_device': '1',
+            'verification_method': '1', # sms
+            '_csrftoken': self.csrftoken,
+            'username': self.username,
+            'password': self.password,
+            'verification_code': verify_code,
+            'two_factor_identifier': two_factor_id,
+            'guid': self.uuid,
+            'device_id': self.device_id,
+        }
+        login_response = self._call_api(
+            'accounts/two_factor_login/', params=login_params, return_response=True)
+        
+        if not self.csrftoken:
+            raise ClientError(
+                'Unable to get csrf from login.',
+                error_response=self._read_response(login_response))
+
+        login_json = json.loads(self._read_response(login_response))
+            
+        if not login_json.get('logged_in_user', {}).get('pk'):
+            raise ClientLoginError('Unable to login.')
+        if self.on_login:
+            on_login_callback = self.on_login
+            on_login_callback(self)
+         
+#         const { body } = await this.client.request.send<AccountRepositoryLoginResponseLogged_in_user>({
+#           url: '/api/v1/accounts/two_factor_login/',
+#           method: 'POST',
+#         });
+
 
     def current_user(self):
         """Get current user info"""
