@@ -202,10 +202,16 @@ class Client(AccountsEndpointsMixin, DiscoverEndpointsMixin, FeedEndpointsMixin,
             kwargs.pop('ad_id', None) or user_settings.get('ad_id') or
             self.generate_adid())
 
+        two_factor_id = kwargs.pop('two_factor_id', None)
+        verify_code = kwargs.pop('verify_code', None)
+        print('two_factor_id: {0!s}, verify_code: {1!s}'.format(two_factor_id, verify_code))
         if not cookie_string:   # [TODO] There's probably a better way than to depend on cookie_string
             if not self.username or not self.password:
                 raise ClientLoginRequiredError('login_required', code=400)
-            self.login()
+            if two_factor_id:
+                self.two_factor_login(two_factor_id, verify_code)
+            else:
+                self.login()
 
         self.logger.debug('USERAGENT: {0!s}'.format(self.user_agent))
         super(Client, self).__init__()
