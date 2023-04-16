@@ -58,7 +58,6 @@ class AccountsEndpointsMixin(object):
 
         if login_json.get('two_factor_required', {}):
             print('two factor required, getting identifier and verification code to login instead')
-            login_json = two_factor_login()
             
         if not login_json.get('logged_in_user', {}).get('pk'):
             raise ClientLoginError('Unable to login.')
