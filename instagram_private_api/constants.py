@@ -10,10 +10,10 @@ class Constants(object):
     FB_HTTP_ENGINE = 'Liger'
 
     ANDROID_VERSION = 24
-    ANDROID_RELEASE = '7.0'
-    PHONE_MANUFACTURER = 'samsung'
-    PHONE_DEVICE = 'SM-G930F'
-    PHONE_MODEL = 'herolte'
+    ANDROID_RELEASE = '7.1.1'
+    PHONE_MANUFACTURER = 'LG'
+    PHONE_DEVICE = 'LG-H900'
+    PHONE_MODEL = 'NRD90C'
     PHONE_DPI = '640dpi'
     PHONE_RESOLUTION = '1440x2560'
     PHONE_CHIPSET = 'samsungexynos8890'
